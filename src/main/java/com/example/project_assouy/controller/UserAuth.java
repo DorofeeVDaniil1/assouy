@@ -41,7 +41,7 @@ public class UserAuth {
         // 2. Проверка корректности введённого пароля
         // 3. Генерация токена, например JWT, при успешной аутентификации
 
-        UserPersonal user = userService.loginUser(userIdLogin, userPassword);
+        UserPersonal user = userService.loginUser(userLoginDto.getUserIdLogin(), userLoginDto.getUserPassword());
 
         // Возвращаем ответ с токеном и HTTP статус 200 OK
         return new ResponseEntity<>(user, HttpStatus.OK);

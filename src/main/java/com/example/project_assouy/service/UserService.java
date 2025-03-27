@@ -10,10 +10,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -49,5 +51,29 @@ public class UserService {
 
         // Сохраняем пользователя в репозитории
         return userPersonalRepository.save(userPersonal);
+    }
+    public UserPersonal loginUser(String login, String password) {
+        PasswordEncoder passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
+
+        Optional<User> userOptional = userRepository.findByLogin(login);
+        if (userOptional.isEmpty()) {
+            throw new BadCredentialsException("Неверный логин или пароль");
+        }
+
+        User user = userOptional.get();
+
+        // Проверяем активность пользователя
+        if (!user.getIsActive()) {
+            throw new IllegalStateException("Пользователь неактивен");
+        }
+
+        // Проверяем пароль
+        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+            throw new BadCredentialsException("Неверный логин или пароль");
+        }
+
+        // Возвращаем персональные данные пользователя
+        return userPersonalRepository.findByUserId(user)
+                .orElseThrow(() -> new IllegalStateException("Персональные данные пользователя не найдены"));
     }
 }
